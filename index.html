@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OVMUTE Q&A</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #f7f5f2;
+  --surface: #ffffff;
+  --border: #e8e4df;
+  --accent: #1a1a1a;
+  --accent2: #c8a97e;
+  --text: #1a1a1a;
+  --text2: #888;
+  --green: #2d8a5e;
+  --red: #c0392b;
+  --yellow: #d4870a;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans KR', sans-serif;
+  min-height: 100vh;
+}
+
+/* 헤더 */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow);
+}
+
+.logo {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+
+.logo-sub {
+  font-size: 11px;
+  color: var(--accent2);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  margin-left: 8px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #ccc;
+}
+.dot.live { background: var(--green); animation: blink 2s infinite; }
+.dot.error { background: var(--red); }
+
+@keyframes blink {
+  0%,100% { opacity:1; }
+  50% { opacity:0.3; }
+}
+
+/* 레이아웃 */
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px 16px;
+}
+
+/* 탭 */
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 16px;
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 7px;
+  cursor: pointer;
+  color: var(--text2);
+  transition: all 0.2s;
+  border: none;
+  background: none;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+.tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* 통계 카드 */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+
+.stat-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; letter-spacing: 0.05em; }
+.stat-value { font-size: 24px; font-weight: 700; font-family: 'DM Mono', monospace; }
+.stat-value.warn { color: var(--yellow); }
+.stat-value.ok { color: var(--green); }
+
+/* Q&A 목록 */
+.qa-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+
+.qa-section-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.qa-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.qa-item:last-child { border-bottom: none; }
+.qa-item:hover { background: #f9f7f5; }
+.qa-item.selected { background: #fdf8f3; border-left: 3px solid var(--accent2); }
+
+.qa-status-icon {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+.qa-status-icon.pending { background: var(--yellow); }
+.qa-status-icon.answered { background: var(--green); }
+
+.qa-body { flex: 1; min-width: 0; }
+.qa-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qa-meta { font-size: 12px; color: var(--text2); display: flex; gap: 10px; flex-wrap: wrap; }
+
+.badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+  flex-shrink: 0;
+  align-self: center;
+}
+.badge-pending { background: #fef3e2; color: var(--yellow); }
+.badge-answered { background: #e8f5ee; color: var(--green); }
+
+/* 답변 패널 */
+.reply-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+  overflow: hidden;
+  display: none;
+}
+
+.reply-panel.open { display: block; }
+
+.reply-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: #fdf8f3;
+}
+
+.reply-header-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.reply-header-meta {
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.reply-content {
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  background: #fafafa;
+  white-space: pre-wrap;
+}
+
+.reply-input-area {
+  padding: 16px;
+}
+
+textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  resize: vertical;
+  min-height: 100px;
+  outline: none;
+  transition: border-color 0.2s;
+  background: var(--bg);
+}
+
+textarea:focus { border-color: var(--accent2); }
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+button {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 9px 18px;
+  border-radius: 7px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: #333; }
+.btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text2);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { border-color: var(--text2); color: var(--text); }
+
+/* 설정 탭 */
+.settings-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+
+.settings-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text2);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.input-label {
+  font-size: 11px;
+  color: var(--text2);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+input[type="text"], input[type="number"], input[type="password"] {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 9px 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input:focus { border-color: var(--accent2); }
+
+/* 로그 */
+.log-section {
+  background: var(--accent);
+  border-radius: 10px;
+  padding: 16px;
+  max-height: 150px;
+  overflow-y: auto;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: #aaa;
+  line-height: 1.9;
+}
+
+.log-entry { display: flex; gap: 10px; }
+.log-time { color: #555; flex-shrink: 0; }
+.log-ok { color: #4caf7d; }
+.log-err { color: #e05c5c; }
+.log-info { color: var(--accent2); }
+
+/* 새로고침 버튼 */
+.refresh-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 11px;
+  color: var(--text2);
+  cursor: pointer;
+}
+.refresh-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+/* 빈 상태 */
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: var(--text2);
+  font-size: 13px;
+}
+
+/* 반응형 */
+@media (max-width: 600px) {
+  .header { padding: 12px 16px; }
+  .logo-sub { display: none; }
+  .stats { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .stat-card { padding: 10px 12px; }
+  .stat-value { font-size: 20px; }
+  .input-grid { grid-template-columns: 1fr; }
+}
+
+/* 토스트 */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 999;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <span class="logo">OVMUTE</span>
+    <span class="logo-sub">Q&A 관리</span>
+  </div>
+  <div class="header-right">
+    <div class="status-indicator">
+      <div class="dot" id="dot"></div>
+      <span id="statusText">대기</span>
+    </div>
+    <button class="btn-primary" id="mainBtn" onclick="toggleMonitor()" style="font-size:12px;padding:7px 14px;">▶ 시작</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 탭 -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('qa')">📋 Q&A 목록</button>
+    <button class="tab" onclick="switchTab('settings')">⚙ 설정</button>
+    <button class="tab" onclick="switchTab('log')">🖥 로그</button>
+  </div>
+
+  <!-- Q&A 탭 -->
+  <div id="tab-qa">
+    <!-- 통계 -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">전체</div>
+        <div class="stat-value" id="totalCount">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">미답변</div>
+        <div class="stat-value warn" id="pendingCount">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">마지막 확인</div>
+        <div class="stat-value ok" id="lastCheck" style="font-size:14px;padding-top:5px;">-</div>
+      </div>
+    </div>
+
+    <!-- 답변 패널 -->
+    <div class="reply-panel" id="replyPanel">
+      <div class="reply-header">
+        <div class="reply-header-title" id="replyTitle"></div>
+        <div class="reply-header-meta" id="replyMeta"></div>
+      </div>
+      <div class="reply-content" id="replyContent"></div>
+      <div class="reply-input-area">
+        <textarea id="replyText" placeholder="답변을 입력하세요..."></textarea>
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="closeReply()">닫기</button>
+          <button class="btn-primary" id="sendBtn" onclick="sendReply()">✉ 답변 등록</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 목록 -->
+    <div class="qa-section">
+      <div class="qa-section-header">
+        <span>최근 문의</span>
+        <button class="refresh-btn" onclick="checkQA()">↻ 새로고침</button>
+      </div>
+      <div id="qaList">
+        <div class="empty-state">▶ 시작 버튼을 눌러주세요</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 설정 탭 -->
+  <div id="tab-settings" style="display:none;">
+    <div class="settings-section">
+      <div class="settings-title">카페24 설정</div>
+      <div class="input-grid">
+        <div class="input-group">
+          <div class="input-label">Access Token</div>
+          <input type="password" id="accessToken" value="KUbrMo3EJVTttygemIhaaG">
+        </div>
+        <div class="input-group">
+          <div class="input-label">쇼핑몰 ID</div>
+          <input type="text" id="mallId" value="ovmute">
+        </div>
+        <div class="input-group">
+          <div class="input-label">Q&A Board No</div>
+          <input type="text" id="boardNo" value="6">
+        </div>
+        <div class="input-group">
+          <div class="input-label">확인 주기 (분)</div>
+          <input type="number" id="interval" value="5" min="1" max="60">
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">Make.com 설정</div>
+      <div class="input-grid">
+        <div class="input-group" style="grid-column: 1/-1;">
+          <div class="input-label">답변 등록 Webhook URL</div>
+          <input type="text" id="replyWebhook" value="https://hook.eu1.make.com/xf2j464cfqofgvmlb3yn88xnr7vzgfgj">
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">텔레그램 설정</div>
+      <div class="input-grid">
+        <div class="input-group">
+          <div class="input-label">Bot Token</div>
+          <input type="password" id="botToken" value="8666477173:AAEE421PLKxOerw9fHQIyyfvcr4USww1xKY">
+        </div>
+        <div class="input-group">
+          <div class="input-label">Chat ID</div>
+          <input type="text" id="chatId" value="8636352615">
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-primary" onclick="saveSettings()">설정 저장</button>
+    </div>
+  </div>
+
+  <!-- 로그 탭 -->
+  <div id="tab-log" style="display:none;">
+    <div class="log-section" id="logArea"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── 상태 ──
+let isRunning = false;
+let timer = null;
+let countdownTimer = null;
+let knownNos = new Set();
+let currentArticle = null;
+let articles = [];
+
+// ── 설정 로드/저장 ──
+function getSettings() {
+  return {
+    accessToken: document.getElementById('accessToken').value,
+    mallId: document.getElementById('mallId').value,
+    boardNo: document.getElementById('boardNo').value,
+    interval: parseInt(document.getElementById('interval').value) || 5,
+    replyWebhook: document.getElementById('replyWebhook').value,
+    botToken: document.getElementById('botToken').value,
+    chatId: document.getElementById('chatId').value,
+  };
+}
+
+function saveSettings() {
+  const s = getSettings();
+  localStorage.setItem('ovmute_settings', JSON.stringify(s));
+  showToast('설정이 저장되었습니다');
+  addLog('설정 저장 완료', 'ok');
+}
+
+function loadSettings() {
+  const saved = localStorage.getItem('ovmute_settings');
+  if (!saved) return;
+  const s = JSON.parse(saved);
+  Object.keys(s).forEach(k => {
+    const el = document.getElementById(k);
+    if (el) el.value = s[k];
+  });
+}
+
+// ── 탭 ──
+function switchTab(name) {
+  ['qa','settings','log'].forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = t === name ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach((tab, i) => {
+    tab.classList.toggle('active', ['qa','settings','log'][i] === name);
+  });
+}
+
+// ── 모니터 토글 ──
+function toggleMonitor() {
+  isRunning ? stopMonitor() : startMonitor();
+}
+
+function startMonitor() {
+  isRunning = true;
+  document.getElementById('mainBtn').textContent = '⏹ 정지';
+  document.getElementById('dot').className = 'dot live';
+  document.getElementById('statusText').textContent = '모니터링 중';
+  addLog('모니터링 시작', 'ok');
+  checkQA();
+  scheduleNext();
+}
+
+function stopMonitor() {
+  isRunning = false;
+  clearTimeout(timer);
+  clearInterval(countdownTimer);
+  document.getElementById('mainBtn').textContent = '▶ 시작';
+  document.getElementById('dot').className = 'dot';
+  document.getElementById('statusText').textContent = '정지됨';
+  addLog('모니터링 정지', 'err');
+}
+
+function scheduleNext() {
+  const s = getSettings();
+  timer = setTimeout(() => {
+    if (isRunning) { checkQA(); scheduleNext(); }
+  }, s.interval * 60 * 1000);
+}
+
+// ── Q&A 조회 ──
+async function checkQA() {
+  const s = getSettings();
+  addLog('Q&A 조회 중...', 'info');
+
+  try {
+    const res = await fetch(`https://${s.mallId}.cafe24api.com/api/v2/admin/boards/${s.boardNo}/articles?limit=30`, {
+      headers: {
+        'Authorization': `Bearer ${s.accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      addLog(`오류: ${data.error.message}`, 'err');
+      document.getElementById('dot').className = 'dot error';
+      document.getElementById('statusText').textContent = '오류';
+      return;
+    }
+
+    articles = (data.articles || []).filter(a => !a.title.startsWith('[NOTICE]'));
+    const newOnes = articles.filter(a => !knownNos.has(a.article_no) && knownNos.size > 0);
+
+    articles.forEach(a => knownNos.add(a.article_no));
+
+    if (newOnes.length > 0) {
+      addLog(`새 문의 ${newOnes.length}건!`, 'ok');
+      newOnes.forEach(a => sendTelegramAlert(a));
+    } else {
+      addLog('새 문의 없음', 'info');
+    }
+
+    renderList();
+    updateStats();
+    document.getElementById('lastCheck').textContent = new Date().toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'});
+
+  } catch(e) {
+    addLog(`네트워크 오류: ${e.message}`, 'err');
+    document.getElementById('dot').className = 'dot error';
+  }
+}
+
+function updateStats() {
+  const pending = articles.filter(a => !a.reply_sequence || a.reply_sequence === 0).length;
+  document.getElementById('totalCount').textContent = articles.length;
+  document.getElementById('pendingCount').textContent = pending;
+}
+
+function renderList() {
+  const list = document.getElementById('qaList');
+  if (articles.length === 0) {
+    list.innerHTML = '<div class="empty-state">문의가 없습니다</div>';
+    return;
+  }
+  list.innerHTML = '';
+  articles.forEach(a => {
+    const answered = a.reply_sequence && a.reply_sequence > 0;
+    const div = document.createElement('div');
+    div.className = `qa-item ${currentArticle?.article_no === a.article_no ? 'selected' : ''}`;
+    div.onclick = () => openReply(a);
+    div.innerHTML = `
+      <div class="qa-status-icon ${answered ? 'answered' : 'pending'}"></div>
+      <div class="qa-body">
+        <div class="qa-title">${a.title}</div>
+        <div class="qa-meta">
+          <span>${a.writer?.name || a.writer || '익명'}</span>
+          <span>${a.created_date?.slice(0,10) || ''}</span>
+          <span>#${a.article_no}</span>
+        </div>
+      </div>
+      <span class="badge ${answered ? 'badge-answered' : 'badge-pending'}">${answered ? '답변완료' : '미답변'}</span>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// ── 답변 패널 ──
+function openReply(article) {
+  currentArticle = article;
+  document.getElementById('replyTitle').textContent = article.title;
+  document.getElementById('replyMeta').textContent = `${article.writer?.name || article.writer || '익명'} · ${article.created_date?.slice(0,10)}`;
+  document.getElementById('replyContent').textContent = article.content?.replace(/<[^>]*>/g, '') || '(내용 없음)';
+  document.getElementById('replyText').value = '';
+  document.getElementById('replyPanel').classList.add('open');
+  document.getElementById('replyPanel').scrollIntoView({behavior:'smooth', block:'start'});
+  renderList();
+}
+
+function closeReply() {
+  document.getElementById('replyPanel').classList.remove('open');
+  currentArticle = null;
+  renderList();
+}
+
+async function sendReply() {
+  if (!currentArticle) return;
+  const s = getSettings();
+  const replyText = document.getElementById('replyText').value.trim();
+  if (!replyText) { showToast('답변 내용을 입력해주세요'); return; }
+
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true;
+  btn.textContent = '등록 중...';
+
+  addLog(`#${currentArticle.article_no} 답변 등록 중...`, 'info');
+
+  try {
+    // Make.com Webhook 경유로 카페24에 답변 등록
+    const res = await fetch(s.replyWebhook, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        access_token: s.accessToken,
+        mall_id: s.mallId,
+        board_no: s.boardNo,
+        article_no: currentArticle.article_no,
+        content: replyText,
+        title: currentArticle.title,
+        writer: '오브뮤트'
+      })
+    });
+
+    addLog(`#${currentArticle.article_no} 답변 등록 완료!`, 'ok');
+    showToast('답변이 등록되었습니다 ✓');
+    closeReply();
+    setTimeout(() => checkQA(), 2000);
+
+  } catch(e) {
+    addLog(`답변 오류: ${e.message}`, 'err');
+    showToast('답변 등록 실패');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '✉ 답변 등록';
+}
+
+// ── 텔레그램 알림 ──
+async function sendTelegramAlert(article) {
+  const s = getSettings();
+  const content = article.content?.replace(/<[^>]*>/g, '').slice(0, 150) || '';
+  const msg = `🔔 새 Q&A 문의\n\n📋 #${article.article_no}\n제목: ${article.title}\n👤 ${article.writer?.name || article.writer || '익명'}\n📅 ${article.created_date?.slice(0,10)}\n\n💬 ${content}`;
+
+  try {
+    await fetch(`https://api.telegram.org/bot${s.botToken}/sendMessage`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ chat_id: s.chatId, text: msg })
+    });
+    addLog(`텔레그램 알림: #${article.article_no}`, 'ok');
+  } catch(e) {
+    addLog(`텔레그램 오류: ${e.message}`, 'err');
+  }
+}
+
+// ── 로그 ──
+function addLog(msg, type='info') {
+  const area = document.getElementById('logArea');
+  const now = new Date().toLocaleTimeString('ko-KR');
+  const div = document.createElement('div');
+  div.className = 'log-entry';
+  div.innerHTML = `<span class="log-time">${now}</span><span class="log-${type}">${msg}</span>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+// ── 토스트 ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── 초기화 ──
+loadSettings();
+addLog('앱 준비 완료', 'ok');
+</script>
+</body>
+</html>
