@@ -12,7 +12,7 @@
   --surface: #ffffff;
   --border: #e8e4df;
   --accent: #1a1a1a;
-  --accent2: #c8a97e;
+  --accent2: #c8a97e;hh
   --text: #1a1a1a;
   --text2: #888;
   --green: #2d8a5e;
@@ -640,11 +640,10 @@ async function checkQA() {
   addLog('Q&A 조회 중...', 'info');
 
   try {
-    const res = await fetch(`https://${s.mallId}.cafe24api.com/api/v2/admin/boards/${s.boardNo}/articles?limit=30`, {
-      headers: {
-        'Authorization': `Bearer ${s.accessToken}`,
-        'Content-Type': 'application/json'
-      }
+    const res = await fetch(s.qaWebhook + '?type=get&offset=0', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({type: 'get', offset: 0})
     });
     const data = await res.json();
 
@@ -743,17 +742,13 @@ async function sendReply() {
 
   try {
     // Make.com Webhook 경유로 카페24에 답변 등록
-    const res = await fetch(s.replyWebhook, {
+    const res = await fetch(s.qaWebhook, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
-        access_token: s.accessToken,
-        mall_id: s.mallId,
-        board_no: s.boardNo,
+        type: 'reply',
         article_no: currentArticle.article_no,
-        content: replyText,
-        title: currentArticle.title,
-        writer: '오브뮤트'
+        content: replyText
       })
     });
 
